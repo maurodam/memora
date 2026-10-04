@@ -1,4 +1,6 @@
-# AlbumScanner
+# Memora
+
+your album scanner
 
 Applicazione desktop locale per macOS, sviluppata con Angular 22, Electron e SpartanNG LUMA. Conserva album, pagine e posizioni delle fotografie. Nessun login, backend, database o servizio cloud.
 
@@ -18,10 +20,10 @@ npm run dev
 ```bash
 npm run build             # Angular e main/preload Electron
 npm run scanner:build     # helper Swift ImageCaptureCore
-npm run electron:build    # helper + build + AlbumScanner.app macOS Intel
+npm run electron:build    # helper + build + Memora.app macOS Intel
 ```
 
-Applicazione generata: `release/mac/AlbumScanner.app`. Build locale non firmata, senza pubblicazione sul Mac App Store. La configurazione prevede anche arm64: per quel target compilare il helper sul Mac arm64 e usare `electron-builder --mac dir --arm64` dopo le build.
+Applicazione generata: `release/mac/Memora.app`. Build locale non firmata, senza pubblicazione sul Mac App Store. La configurazione prevede anche arm64: per quel target compilare il helper sul Mac arm64 e usare `electron-builder --mac dir --arm64` dopo le build.
 
 ## Workflow
 
@@ -32,7 +34,7 @@ Applicazione generata: `release/mac/AlbumScanner.app`. Build locale non firmata,
 5. L’immagine viene convertita realmente nel formato selezionato. JPEG usa qualità 95 e fondo bianco per la trasparenza. I DPI del Fake Scanner non ricampionano l’immagine sorgente.
 6. Dopo acquisizione viene selezionato il prossimo slot incompleto, anche nelle pagine successive. La ricerca torna all’inizio dopo l’ultima pagina.
 
-Riga, colonna e preset dello slot si modificano con i controlli sopra la pagina. Sono bloccati sovrapposizioni e posizioni fuori griglia. Il formato dello slot descrive la disposizione fisica e non modifica i pixel dell’immagine.
+Clicca una cella vuota per creare una foto con il preset selezionato. Riga, colonna e preset si aggiornano subito dai controlli sopra la pagina. Trascina una foto per spostarla: la destinazione si aggancia alla griglia e viene evidenziata prima del rilascio. Sono bloccati sovrapposizioni e posizioni fuori griglia. Il formato dello slot descrive la disposizione fisica e non modifica i pixel dell’immagine.
 
 La scansione può sostituire un file solo dopo conferma. Eliminare una foto o un album sposta i file nel Cestino macOS; solo dopo successo vengono rimossi i metadata. Le fotografie non vengono rinumerate dopo un’eliminazione.
 
@@ -52,7 +54,7 @@ Album famiglia 1998/
 
 Il file nascosto `.albumscanner-managed` è un marcatore di proprietà, senza metadata dell’album. Impedisce che metadata alterati autorizzino operazioni su cartelle arbitrarie del Mac. Non rimuoverlo.
 
-Metadata, impostazioni e selezione sono salvati esclusivamente in localStorage, chiave `albumscanner.state.v1`. Immagini e base64 non vengono salvati in localStorage. Profilo Electron: `~/Library/Application Support/AlbumScanner`. Origine stabile `app://albumscanner` per sviluppo e `.app`.
+Metadata, impostazioni e selezione sono salvati esclusivamente in localStorage, chiave `albumscanner.state.v1`. Immagini e base64 non vengono salvati in localStorage. Per mantenere gli album esistenti, gli identificatori tecnici e il profilo originale restano invariati. Profilo Electron: `~/Library/Application Support/AlbumScanner`. Origine stabile `app://albumscanner` per sviluppo e `.app`.
 
 Un file mancante viene segnalato senza cancellarne il path dai metadata. La UI aggiorna il completamento e consente riacquisizione. Una cartella album rimossa produce errore; l’app non la ricrea silenziosamente.
 
@@ -102,6 +104,7 @@ npm run test:smoke             # UI/Fake, immagini, riavvio, quota, Cestino
 npm run test:native-adapter    # adapter reale con peer di protocollo simulato
 npm run test:helper            # helper ImageCaptureCore reale, anche senza scanner
 npm run test:boundaries        # isolamento Electron, concorrenza, metadata corrotti
+npm run test:layout            # clic celle, modifiche immediate e trascinamento
 ```
 
 I test Electron usano profili e cartelle isolati in `.test-artifacts`. Il picker è simulato, conversione e filesystem sono reali. Il test Fake sposta soltanto file generati dal test nel Cestino reale. Non usa il profilo personale AlbumScanner.
@@ -109,7 +112,7 @@ I test Electron usano profili e cartelle isolati in `.test-artifacts`. Il picker
 Verifica `.app` fuori dal progetto:
 
 ```bash
-ALBUMSCANNER_EXECUTABLE="$PWD/release/mac/AlbumScanner.app/Contents/MacOS/AlbumScanner" npm run test:smoke
+ALBUMSCANNER_EXECUTABLE="$PWD/release/mac/Memora.app/Contents/MacOS/Memora" npm run test:smoke
 ```
 
 Gli override `ALBUMSCANNER_TEST_PROFILE` e `ALBUMSCANNER_TEST_HELPER` sono riservati ai test; il secondo è accettato solo con un profilo di test esplicito.

@@ -41,7 +41,7 @@ export class FileStore {
         (await fs.lstat(marker)).isSymbolicLink() ||
         (await fs.readFile(marker, 'utf8')) !== OWNERSHIP_CONTENT
       )
-        throw new UserError('UNAUTHORIZED_PATH', 'Cartella non creata da AlbumScanner.');
+        throw new UserError('UNAUTHORIZED_PATH', 'Cartella non creata da Memora.');
     } catch (error) {
       if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
         try {
@@ -50,7 +50,7 @@ export class FileStore {
           if ((missing as NodeJS.ErrnoException).code === 'ENOENT') return;
           throw missing;
         }
-        throw new UserError('UNAUTHORIZED_PATH', 'Cartella non creata da AlbumScanner.');
+        throw new UserError('UNAUTHORIZED_PATH', 'Cartella non creata da Memora.');
       }
       throw error;
     }

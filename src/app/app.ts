@@ -12,8 +12,8 @@ import { DesktopService } from './core/services/desktop.service';
         routerLink="/"
         class="text-lg font-semibold tracking-tight"
         [class.pointer-events-none]="albums.busy()"
-        >AlbumScanner<span class="ml-3 text-xs font-normal tracking-normal text-muted-foreground"
-          >Ricordi, in ordine.</span
+        >Memora<span class="ml-3 text-xs font-normal tracking-normal text-muted-foreground"
+          >your album scanner</span
         ></a
       >
       <nav aria-label="Navigazione" class="flex gap-2" [class.pointer-events-none]="albums.busy()">
@@ -31,7 +31,7 @@ import { DesktopService } from './core/services/desktop.service';
     </header>
     @if (!desktop.available) {
       <div hlmAlert class="m-4">
-        <h2 hlmAlertTitle>Apri AlbumScanner con Electron</h2>
+        <h2 hlmAlertTitle>Apri Memora con Electron</h2>
         <p hlmAlertDescription>
           Dialog, scanner e filesystem richiedono l’app desktop. Avvia npm run dev.
         </p>

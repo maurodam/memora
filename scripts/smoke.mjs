@@ -162,7 +162,6 @@ try {
   await page.getByRole('button', { name: 'Riprova salvataggio' }).click();
   await expect(page.getByRole('button', { name: 'Riprova salvataggio' })).not.toBeVisible();
   await page.getByLabel('Colonna', { exact: true }).fill('4');
-  await page.getByRole('button', { name: 'Applica', exact: true }).click();
   const moved = await page.evaluate(
     () =>
       JSON.parse(localStorage.getItem('albumscanner.state.v1')).albums[0].pages[1].photos[0].column,

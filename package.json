@@ -1,5 +1,5 @@
 {
-  "name": "album-scanner",
+  "name": "memora",
   "version": "0.1.0",
   "private": true,
   "description": "Digitizzazione locale di album fotografici su macOS",
@@ -19,7 +19,8 @@
     "test:smoke": "node scripts/smoke.mjs",
     "test:native-adapter": "node scripts/native-adapter-smoke.mjs",
     "test:helper": "node scripts/helper-smoke.mjs",
-    "test:boundaries": "node scripts/boundary-smoke.mjs"
+    "test:boundaries": "node scripts/boundary-smoke.mjs",
+    "test:layout": "node scripts/layout-smoke.mjs"
   },
   "dependencies": {
     "@angular/cdk": "22.2.1",
@@ -58,7 +59,7 @@
   },
   "build": {
     "appId": "it.damianomauro.albumscanner",
-    "productName": "AlbumScanner",
+    "productName": "Memora",
     "directories": {
       "output": "release"
     },
@@ -82,7 +83,7 @@
       "identity": null,
       "minimumSystemVersion": "13.0",
       "extendInfo": {
-        "NSLocalNetworkUsageDescription": "AlbumScanner cerca gli scanner disponibili sulla rete locale."
+        "NSLocalNetworkUsageDescription": "Memora cerca gli scanner disponibili sulla rete locale."
       }
     },
     "extraResources": [

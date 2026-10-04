@@ -58,7 +58,7 @@ import { ScannerToolbarComponent } from '../scanner/scanner-toolbar.component';
                   {{
                     adding()
                       ? 'Scegli la cella iniziale della foto.'
-                      : 'Seleziona una foto per acquisirla.'
+                      : 'Clicca una cella vuota per aggiungere una foto. Trascina le foto per spostarle.'
                   }}
                 </p>
               </div>
@@ -95,7 +95,7 @@ import { ScannerToolbarComponent } from '../scanner/scanner-toolbar.component';
                     max="8"
                     class="w-20"
                     [ngModel]="editRow()"
-                    (ngModelChange)="editRow.set($event)"
+                    (ngModelChange)="editRow.set($event); edit()"
                     [disabled]="albums.busy()"
                   />
                 </div>
@@ -109,7 +109,7 @@ import { ScannerToolbarComponent } from '../scanner/scanner-toolbar.component';
                     max="6"
                     class="w-20"
                     [ngModel]="editColumn()"
-                    (ngModelChange)="editColumn.set($event)"
+                    (ngModelChange)="editColumn.set($event); edit()"
                     [disabled]="albums.busy()"
                   />
                 </div>
@@ -127,9 +127,7 @@ import { ScannerToolbarComponent } from '../scanner/scanner-toolbar.component';
                     </option></hlm-native-select
                   >
                 </div>
-                <button hlmBtn variant="outline" [disabled]="albums.busy()" (click)="edit()">
-                  Applica</button
-                ><button hlmBtn variant="ghost" [disabled]="albums.busy()" (click)="removeSlot()">
+                <button hlmBtn variant="ghost" [disabled]="albums.busy()" (click)="removeSlot()">
                   Elimina foto
                 </button>
                 @if (slot.filePath && !missing().includes(slot.id)) {
@@ -141,10 +139,12 @@ import { ScannerToolbarComponent } from '../scanner/scanner-toolbar.component';
               [page]="page()!"
               [selected]="selected()?.id"
               [adding]="adding()"
+              [preset]="preset()"
               [disabled]="albums.busy() || albums.storage.blocked()"
               [previews]="previews()"
               [missing]="missing()"
               (place)="add($event)"
+              (move)="move($event)"
               (selectSlot)="selectSlot($event)"
               (fileMissing)="onMissing($event)"
             />
@@ -280,8 +280,10 @@ export class AlbumWorkspaceComponent {
       this.preset.set(value);
   }
   setEditPreset(value: string | null | undefined): void {
-    if (value === 'vertical' || value === 'horizontal' || value === 'square')
+    if (value === 'vertical' || value === 'horizontal' || value === 'square') {
       this.editPreset.set(value);
+      this.edit();
+    }
   }
   selectPage(number: number): void {
     if (this.albums.busy()) return;
@@ -295,9 +297,12 @@ export class AlbumWorkspaceComponent {
     );
   }
   selectSlot(id: string): void {
-    if (!this.albums.busy()) this.albums.select(this.id, this.pageNumber(), id);
+    if (this.albums.busy()) return;
+    this.adding.set(false);
+    this.albums.select(this.id, this.pageNumber(), id);
   }
   add(cell: { row: number; column: number }): void {
+    if (this.albums.busy() || this.albums.storage.blocked()) return;
     try {
       this.albums.addSlot(this.id, this.pageNumber(), cell.row, cell.column, this.preset());
       this.adding.set(false);
@@ -306,7 +311,26 @@ export class AlbumWorkspaceComponent {
       this.albums.message.set((e as Error).message);
     }
   }
+  move(position: { id: string; row: number; column: number }): void {
+    const slot = this.page()?.photos.find((photo) => photo.id === position.id);
+    if (!slot || this.albums.busy() || this.albums.storage.blocked()) return;
+    try {
+      this.albums.editSlot(
+        this.id,
+        this.pageNumber(),
+        slot.id,
+        position.row,
+        position.column,
+        slot.preset,
+      );
+      this.selectSlot(slot.id);
+      this.albums.message.set('');
+    } catch (e) {
+      this.albums.message.set((e as Error).message);
+    }
+  }
   edit(): void {
+    if (!this.selected() || this.albums.busy() || this.albums.storage.blocked()) return;
     try {
       this.albums.editSlot(
         this.id,

@@ -9,11 +9,11 @@ import { registerIpc } from './ipc/register';
 import { STORAGE_KEY } from '../shared/desktop-contracts';
 import { validState } from '../shared/album-rules';
 if (process.platform !== 'darwin') {
-  console.error('AlbumScanner supporta solo macOS.');
+  console.error('Memora supporta solo macOS.');
   app.exit(1);
 }
-app.setName('AlbumScanner');
-// Use one persistent profile for development and packaged builds.
+app.setName('Memora');
+// Keep the original profile to preserve existing albums across the Memora rename.
 app.setPath(
   'userData',
   process.env['ALBUMSCANNER_TEST_PROFILE'] || path.join(app.getPath('appData'), 'AlbumScanner'),
@@ -90,7 +90,7 @@ app.whenReady().then(async () => {
       height: 900,
       minWidth: 960,
       minHeight: 680,
-      title: 'AlbumScanner',
+      title: 'Memora',
       backgroundColor: '#fafafa',
       show: false,
       webPreferences: {

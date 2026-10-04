@@ -1,7 +1,7 @@
 import { spawn } from 'node:child_process';
 import { watch } from 'node:fs';
 import electron from 'electron';
-if (process.platform !== 'darwin') throw new Error('AlbumScanner supporta solo macOS.');
+if (process.platform !== 'darwin') throw new Error('Memora supporta solo macOS.');
 const run = (file, args) =>
   spawn(file, args, { stdio: 'inherit', env: { ...process.env, NG_CLI_ANALYTICS: 'false' } });
 const initial = run(process.execPath, [
