@@ -1,0 +1,9 @@
+node_modules/
+dist/
+dist-electron/
+release/
+.angular/
+.tools/
+.test-artifacts/
+native/macos-scanner/.build/
+.DS_Store
