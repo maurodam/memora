@@ -7,6 +7,7 @@ interface Confirmation {
   title: string;
   message: string;
   action: string;
+  destructive: boolean;
 }
 @Component({
   selector: 'app-confirmation',
@@ -17,7 +18,13 @@ interface Confirmation {
     </div>
     <div hlmDialogFooter class="mt-6">
       <button hlmBtn variant="outline" (click)="ref.close(false)">Annulla</button
-      ><button hlmBtn (click)="ref.close(true)">{{ context.action }}</button>
+      ><button
+        hlmBtn
+        [variant]="context.destructive ? 'destructive' : 'default'"
+        (click)="ref.close(true)"
+      >
+        {{ context.action }}
+      </button>
     </div>`,
 })
 class ConfirmationComponent {
@@ -27,9 +34,9 @@ class ConfirmationComponent {
 @Injectable({ providedIn: 'root' })
 export class ConfirmationService {
   private dialogs = inject(HlmDialogService);
-  async ask(title: string, message: string, action: string): Promise<boolean> {
+  async ask(title: string, message: string, action: string, destructive = false): Promise<boolean> {
     const ref = this.dialogs.open<boolean, Confirmation>(ConfirmationComponent, {
-      context: { title, message, action },
+      context: { title, message, action, destructive },
       closeLabel: 'Chiudi',
       contentClass: 'shadow-none',
       role: 'alertdialog',

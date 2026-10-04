@@ -34,7 +34,7 @@ Applicazione generata: `release/mac/Memora.app`. Build locale non firmata, senza
 5. L’immagine viene convertita realmente nel formato selezionato. JPEG usa qualità 95 e fondo bianco per la trasparenza. I DPI del Fake Scanner non ricampionano l’immagine sorgente.
 6. Dopo acquisizione viene selezionato il prossimo slot incompleto, anche nelle pagine successive. La ricerca torna all’inizio dopo l’ultima pagina.
 
-Clicca una cella vuota per creare una foto con il preset selezionato. Riga, colonna e preset si aggiornano subito dai controlli sopra la pagina. Trascina una foto per spostarla: la destinazione si aggancia alla griglia e viene evidenziata prima del rilascio. Sono bloccati sovrapposizioni e posizioni fuori griglia. Il formato dello slot descrive la disposizione fisica e non modifica i pixel dell’immagine.
+Clicca una cella vuota per creare una foto con il preset selezionato. Riga, colonna e preset si aggiornano subito dai controlli sopra la pagina. Passando sopra una foto compaiono due pulsanti tondi: “+” avvia la scansione di quello slot, il cestino apre la conferma di eliminazione. I pulsanti compaiono anche con il focus da tastiera. Trascina una foto per spostarla: la destinazione si aggancia alla griglia e viene evidenziata prima del rilascio. Sono bloccati sovrapposizioni e posizioni fuori griglia. Il formato dello slot descrive la disposizione fisica e non modifica i pixel dell’immagine.
 
 La scansione può sostituire un file solo dopo conferma. Eliminare una foto o un album sposta i file nel Cestino macOS; solo dopo successo vengono rimossi i metadata. Le fotografie non vengono rinumerate dopo un’eliminazione.
 

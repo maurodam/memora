@@ -74,6 +74,7 @@ export class AlbumListComponent {
         'Elimina album',
         `La cartella “${album.name}” e tutte le fotografie saranno spostate nel Cestino.`,
         'Sposta nel Cestino',
+        true,
       ))
     )
       return;

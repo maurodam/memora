@@ -127,7 +127,12 @@ import { ScannerToolbarComponent } from '../scanner/scanner-toolbar.component';
                     </option></hlm-native-select
                   >
                 </div>
-                <button hlmBtn variant="ghost" [disabled]="albums.busy()" (click)="removeSlot()">
+                <button
+                  hlmBtn
+                  variant="destructive"
+                  [disabled]="albums.busy()"
+                  (click)="removeSlot()"
+                >
                   Elimina foto
                 </button>
                 @if (slot.filePath && !missing().includes(slot.id)) {
@@ -146,6 +151,8 @@ import { ScannerToolbarComponent } from '../scanner/scanner-toolbar.component';
               (place)="add($event)"
               (move)="move($event)"
               (selectSlot)="selectSlot($event)"
+              (scanSlot)="scanSlot($event)"
+              (removeSlot)="removeSlot($event)"
               (fileMissing)="onMissing($event)"
             />
           </div>
@@ -345,23 +352,33 @@ export class AlbumWorkspaceComponent {
       this.albums.message.set((e as Error).message);
     }
   }
-  async removeSlot(): Promise<void> {
+  async scanSlot(id: string): Promise<void> {
+    if (this.albums.busy() || this.albums.storage.blocked()) return;
+    this.selectSlot(id);
+    await this.scan();
+  }
+  async removeSlot(id?: string): Promise<void> {
+    if (this.albums.busy() || this.albums.storage.blocked()) return;
+    if (id) this.selectSlot(id);
     const slot = this.selected();
-    if (!slot || this.albums.busy()) return;
-    if (
-      !(await this.confirm.ask(
-        'Elimina foto',
-        slot.filePath
-          ? 'L’immagine sarà spostata nel Cestino. Lo slot sarà rimosso senza rinumerare le altre foto.'
-          : 'Lo slot sarà rimosso. Le altre foto manterranno il loro numero.',
-        slot.filePath ? 'Sposta nel Cestino' : 'Elimina slot',
-      ))
-    )
-      return;
+    const album = this.album();
+    const pageNumber = this.pageNumber();
+    if (!slot || !album) return;
     this.albums.busy.set(true);
     try {
-      await this.desktop.trashPhoto(this.album()!.basePath, this.pageNumber(), slot.position);
-      this.albums.removeSlot(this.id, this.pageNumber(), slot.id);
+      if (
+        !(await this.confirm.ask(
+          'Elimina foto ' + slot.position,
+          slot.filePath
+            ? 'L’immagine sarà spostata nel Cestino. Lo slot sarà rimosso senza rinumerare le altre foto.'
+            : 'Lo slot sarà rimosso. Le altre foto manterranno il loro numero.',
+          slot.filePath ? 'Sposta nel Cestino' : 'Elimina slot',
+          true,
+        ))
+      )
+        return;
+      await this.desktop.trashPhoto(album.basePath, pageNumber, slot.position);
+      this.albums.removeSlot(this.id, pageNumber, slot.id);
     } catch (e) {
       this.albums.message.set((e as Error).message);
     } finally {
@@ -372,7 +389,7 @@ export class AlbumWorkspaceComponent {
     const slot = this.selected();
     const album = this.album();
     const pageNumber = this.pageNumber();
-    if (!slot || !album || this.albums.busy()) return;
+    if (!slot || !album || this.albums.busy() || this.albums.storage.blocked()) return;
     this.albums.busy.set(true);
     this.albums.message.set('');
     try {

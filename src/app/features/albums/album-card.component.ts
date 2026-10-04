@@ -28,7 +28,7 @@ import { Album, progress } from '../../core/models/models';
     </div>
     <div hlmCardFooter class="flex justify-between gap-2">
       <a hlmBtn [routerLink]="['/albums', album().id]">Apri album</a
-      ><button hlmBtn variant="ghost" [disabled]="disabled()" (click)="remove.emit(album())">
+      ><button hlmBtn variant="destructive" [disabled]="disabled()" (click)="remove.emit(album())">
         Elimina
       </button>
     </div>

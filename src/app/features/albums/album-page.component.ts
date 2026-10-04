@@ -33,6 +33,8 @@ import { PhotoSlotComponent } from './photo-slot.component';
         [missing]="missing().includes(slot.id)"
         [preview]="previews()[slot.id] || ''"
         (selectSlot)="selectSlot.emit($event)"
+        (scanSlot)="scanSlot.emit($event)"
+        (removeSlot)="removeSlot.emit($event)"
         (imageError)="fileMissing.emit(slot.id)"
         (dragStart)="start($event, slot)"
         (dragEnd)="reset()"
@@ -63,6 +65,8 @@ export class AlbumPageComponent {
   readonly selectSlot = output<string>();
   readonly place = output<{ row: number; column: number }>();
   readonly move = output<{ id: string; row: number; column: number }>();
+  readonly scanSlot = output<string>();
+  readonly removeSlot = output<string>();
   readonly fileMissing = output<string>();
   readonly target = signal<
     (Pick<PhotoSlot, 'row' | 'column' | 'width' | 'height'> & { valid: boolean }) | undefined
