@@ -1,4 +1,5 @@
 import Foundation
+import CoreFoundation
 import ImageCaptureCore
 import UniformTypeIdentifiers
 
@@ -184,4 +185,4 @@ FileHandle.standardInput.readabilityHandler = { handle in
         DispatchQueue.main.async { helper.command(input) }
     }
 }
-RunLoop.main.run()
+CFRunLoopRun()

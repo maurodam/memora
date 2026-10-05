@@ -101,7 +101,7 @@ export class AlbumCreateComponent {
       const folder = await this.desktop.selectFolder();
       if (folder) this.folder.set(folder);
     } catch (e) {
-      this.albums.message.set((e as Error).message);
+      this.albums.notify((e as Error).message);
     }
   }
   async create(): Promise<void> {
@@ -113,14 +113,14 @@ export class AlbumCreateComponent {
       return;
     }
     this.albums.busy.set(true);
-    this.albums.message.set('');
+    this.albums.dismissMessage();
     try {
       const path = await this.desktop.createAlbum(this.folder(), name);
       const album = this.albums.addAlbum(name, this.form.controls.pages.value, path);
       this.albums.busy.set(false);
       await this.router.navigate(['/albums', album.id]);
     } catch (e) {
-      this.albums.message.set((e as Error).message);
+      this.albums.notify((e as Error).message);
     } finally {
       this.albums.busy.set(false);
     }

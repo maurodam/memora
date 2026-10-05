@@ -253,7 +253,7 @@ export class AlbumWorkspaceComponent {
                 'Scanner non disponibile',
             ),
           )
-          .catch((e) => this.albums.message.set((e as Error).message));
+          .catch((e) => this.albums.notify((e as Error).message));
     });
   }
   private async refreshPreviews(photos: Array<{ id: string; filePath: string }>): Promise<void> {
@@ -267,7 +267,7 @@ export class AlbumWorkspaceComponent {
             previews[p.id] = await this.desktop.preview(p.filePath);
           else missing.push(p.id);
         } catch (e) {
-          this.albums.message.set((e as Error).message);
+          this.albums.notify((e as Error).message);
         }
       }),
     );
@@ -275,8 +275,9 @@ export class AlbumWorkspaceComponent {
     this.previews.set(previews);
     if (this.album()) this.albums.setMissing(this.album()!, missing);
     if (missing.length)
-      this.albums.message.set(
+      this.albums.notify(
         'Alcune immagini non sono più presenti. Seleziona gli slot indicati per riacquisirle.',
+        'warning',
       );
   }
   onMissing(id: string): void {
@@ -313,9 +314,9 @@ export class AlbumWorkspaceComponent {
     try {
       this.albums.addSlot(this.id, this.pageNumber(), cell.row, cell.column, this.preset());
       this.adding.set(false);
-      this.albums.message.set('');
+      this.albums.dismissMessage();
     } catch (e) {
-      this.albums.message.set((e as Error).message);
+      this.albums.notify((e as Error).message);
     }
   }
   move(position: { id: string; row: number; column: number }): void {
@@ -331,9 +332,9 @@ export class AlbumWorkspaceComponent {
         slot.preset,
       );
       this.selectSlot(slot.id);
-      this.albums.message.set('');
+      this.albums.dismissMessage();
     } catch (e) {
-      this.albums.message.set((e as Error).message);
+      this.albums.notify((e as Error).message);
     }
   }
   edit(): void {
@@ -347,9 +348,9 @@ export class AlbumWorkspaceComponent {
         this.editColumn(),
         this.editPreset(),
       );
-      this.albums.message.set('');
+      this.albums.dismissMessage();
     } catch (e) {
-      this.albums.message.set((e as Error).message);
+      this.albums.notify((e as Error).message);
     }
   }
   async scanSlot(id: string): Promise<void> {
@@ -380,7 +381,7 @@ export class AlbumWorkspaceComponent {
       await this.desktop.trashPhoto(album.basePath, pageNumber, slot.position);
       this.albums.removeSlot(this.id, pageNumber, slot.id);
     } catch (e) {
-      this.albums.message.set((e as Error).message);
+      this.albums.notify((e as Error).message);
     } finally {
       this.albums.busy.set(false);
     }
@@ -391,7 +392,7 @@ export class AlbumWorkspaceComponent {
     const pageNumber = this.pageNumber();
     if (!slot || !album || this.albums.busy() || this.albums.storage.blocked()) return;
     this.albums.busy.set(true);
-    this.albums.message.set('');
+    this.albums.dismissMessage();
     try {
       const base = `${album.basePath}/page-${String(pageNumber).padStart(3, '0')}/photo-${String(slot.position).padStart(3, '0')}`;
       const exists = (
@@ -436,9 +437,9 @@ export class AlbumWorkspaceComponent {
       this.albums.acquired(this.id, pageNumber, slot.id, result);
       const next = nextIncomplete(this.displayAlbum()!, slot.id);
       if (next) this.albums.select(this.id, next.pageNumber, next.slotId);
-      else this.albums.message.set('Tutte le fotografie preparate sono state acquisite.');
+      else this.albums.notify('Tutte le fotografie preparate sono state acquisite.', 'success');
     } catch (e) {
-      this.albums.message.set((e as Error).message);
+      this.albums.notify((e as Error).message);
     } finally {
       this.albums.busy.set(false);
     }
@@ -447,21 +448,21 @@ export class AlbumWorkspaceComponent {
     try {
       await this.scanner.cancel();
     } catch (e) {
-      this.albums.message.set((e as Error).message);
+      this.albums.notify((e as Error).message);
     }
   }
   async openFolder(): Promise<void> {
     try {
       await this.desktop.openFolder(this.album()!.basePath);
     } catch (e) {
-      this.albums.message.set((e as Error).message);
+      this.albums.notify((e as Error).message);
     }
   }
   async showFile(): Promise<void> {
     try {
       await this.desktop.showFile(this.selected()!.filePath!);
     } catch (e) {
-      this.albums.message.set((e as Error).message);
+      this.albums.notify((e as Error).message);
     }
   }
 }

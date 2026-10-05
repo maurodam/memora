@@ -16,7 +16,16 @@ export class AlbumService {
   readonly albums = computed(() => this.state().albums);
   readonly missingIds = signal<string[]>([]);
   readonly busy = signal(false);
-  readonly message = signal('');
+  readonly message = signal<{ text: string; severity: 'success' | 'warning' | 'error' } | null>(
+    null,
+  );
+  notify(text: string, severity: 'success' | 'warning' | 'error' = 'error'): void {
+    if (severity === 'success' && this.storage.error()) return;
+    this.message.set({ text, severity });
+  }
+  dismissMessage(): void {
+    this.message.set(null);
+  }
   commit(update: (state: AppState) => void): void {
     if (this.storage.blocked()) throw new Error('Metadata non leggibili. Operazione bloccata.');
     const next = structuredClone(this.state());

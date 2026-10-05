@@ -79,12 +79,12 @@ export class AlbumListComponent {
     )
       return;
     this.albums.busy.set(true);
-    this.albums.message.set('');
+    this.albums.dismissMessage();
     try {
       await this.desktop.trashAlbum(album.basePath);
       this.albums.removeAlbum(album.id);
     } catch (e) {
-      this.albums.message.set((e as Error).message);
+      this.albums.notify((e as Error).message);
     } finally {
       this.albums.busy.set(false);
     }
