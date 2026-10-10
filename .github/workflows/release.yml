@@ -1,0 +1,57 @@
+name: Build and release macOS app
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build macOS ${{ matrix.arch }}
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: x64
+            runner: macos-15-intel
+          - arch: arm64
+            runner: macos-15
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-node@v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npm run scanner:build
+      - run: npm run build
+      - name: Package DMG
+        run: npx electron-builder --mac dmg --${{ matrix.arch }}
+      - name: Verify DMG
+        run: test -s "release/Memora-macOS-${{ matrix.arch }}.dmg"
+      - uses: actions/upload-artifact@v7.0.2
+        with:
+          name: memora-macos-${{ matrix.arch }}
+          path: release/Memora-macOS-${{ matrix.arch }}.dmg
+          if-no-files-found: error
+
+  release:
+    name: Publish GitHub Release
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          pattern: memora-macos-*
+          path: release
+          merge-multiple: true
+      - name: Create release and attach DMGs
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" release/*.dmg --title "Memora $GITHUB_REF_NAME" --generate-notes

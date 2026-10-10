@@ -20,14 +20,14 @@ npm run dev
 ```bash
 npm run build             # Angular e main/preload Electron
 npm run scanner:build     # helper Swift ImageCaptureCore
-npm run electron:build    # helper + build + Memora.app macOS Intel
+npm run electron:build    # helper + build + DMG macOS Intel
 ```
 
-Applicazione generata: `release/mac/Memora.app`. Build locale non firmata, senza pubblicazione sul Mac App Store. La configurazione prevede anche arm64: per quel target compilare il helper sul Mac arm64 e usare `electron-builder --mac dir --arm64` dopo le build.
+Applicazione generata: `release/Memora-macOS-x64.dmg`. Build locale non firmata, senza pubblicazione sul Mac App Store. Per Apple Silicon, compilare il helper sul Mac arm64 e usare `electron-builder --mac dmg --arm64` dopo le build.
 
 ## Workflow
 
-1. Crea un album: nome, numero pagine e cartella scelta dal dialog macOS.
+1. Crea un album: nome, numero pagine e cartella scelta dal dialog macOS. Usa **Suddividi i file in cartelle per pagina** per scegliere come salvare le scansioni. La scelta viene conservata per tutte le scansioni dell’album.
 2. Seleziona una pagina. Premi **Aggiungi foto**, scegli preset e cella iniziale.
 3. Prepara gli slot nella griglia 6×8. Preset: orizzontale 3×2, verticale 2×3, quadrata 2×2. Le celle partono da 1.
 4. Seleziona uno slot e premi **Scansiona foto**. Fake Scanner apre il picker JPG/JPEG/PNG.
@@ -40,7 +40,7 @@ La scansione può sostituire un file solo dopo conferma. Eliminare una foto o un
 
 ## Dati e filesystem
 
-Struttura finale:
+Struttura finale con **Suddividi i file in cartelle per pagina** attivo (impostazione predefinita, anche per gli album esistenti):
 
 ```text
 Album famiglia 1998/
@@ -51,6 +51,8 @@ Album famiglia 1998/
   page-002/
     photo-001.jpg
 ```
+
+Con l’opzione disattivata, tutte le fotografie vengono salvate direttamente nella cartella dell’album, con nomi incrementali `photo-001.jpg`, `photo-002.jpg`, ecc. La numerazione è unica per tutto l’album e viene assegnata alla creazione degli slot, anche tra pagine diverse. I numeri non vengono riutilizzati dopo un’eliminazione. Le pagine e gli slot nell’app restano disponibili in entrambe le modalità.
 
 Il file nascosto `.albumscanner-managed` è un marcatore di proprietà, senza metadata dell’album. Impedisce che metadata alterati autorizzino operazioni su cartelle arbitrarie del Mac. Non rimuoverlo.
 
@@ -101,6 +103,7 @@ IPC verifica finestra, frame, origine e payload. Path esterni e symlink sono rif
 npm test                       # regole album, filesystem, protocollo JSON
 npm run typecheck              # Electron e contratti
 npm run test:smoke             # UI/Fake, immagini, riavvio, quota, Cestino
+ALBUMSCANNER_TEST_FLAT=1 npm run test:smoke # stesso workflow senza cartelle per pagina
 npm run test:native-adapter    # adapter reale con peer di protocollo simulato
 npm run test:helper            # helper ImageCaptureCore reale, anche senza scanner
 npm run test:boundaries        # isolamento Electron, concorrenza, metadata corrotti

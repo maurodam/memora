@@ -12,7 +12,7 @@
     "dev": "node scripts/dev.mjs",
     "electron:dev": "npm run dev",
     "build": "ng build && node scripts/build-electron.mjs",
-    "electron:build": "npm run scanner:build && npm run build && electron-builder --mac dir --x64",
+    "electron:build": "npm run scanner:build && npm run build && electron-builder --mac dmg --x64",
     "test": "node --import tsx --test tests/*.test.ts",
     "typecheck": "tsc -p tsconfig.electron.json --noEmit",
     "scanner:build": "node scripts/build-scanner.mjs",
@@ -70,15 +70,8 @@
       "!node_modules/**/*"
     ],
     "mac": {
-      "target": [
-        {
-          "target": "dir",
-          "arch": [
-            "x64",
-            "arm64"
-          ]
-        }
-      ],
+      "target": ["dmg"],
+      "artifactName": "Memora-macOS-${arch}.${ext}",
       "category": "public.app-category.photography",
       "identity": null,
       "minimumSystemVersion": "13.0",
