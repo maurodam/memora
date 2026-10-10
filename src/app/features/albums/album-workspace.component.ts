@@ -8,7 +8,7 @@ import { AlbumService } from '../../core/services/album.service';
 import { DesktopService } from '../../core/services/desktop.service';
 import { ScannerService } from '../../core/services/scanner.service';
 import { ScannerSettingsService } from '../../core/services/scanner-settings.service';
-import { nextIncomplete, PhotoPreset, progress } from '../../core/models/models';
+import { nextIncomplete, photoBaseName, PhotoPreset, progress } from '../../core/models/models';
 import { ConfirmationService } from '../../shared/components/confirmation.service';
 import { PageSidebarComponent } from './page-sidebar.component';
 import { AlbumPageComponent } from './album-page.component';
@@ -253,7 +253,7 @@ export class AlbumWorkspaceComponent {
                 'Scanner non disponibile',
             ),
           )
-          .catch((e) => this.albums.message.set((e as Error).message));
+          .catch((e) => this.albums.notify((e as Error).message));
     });
   }
   private async refreshPreviews(photos: Array<{ id: string; filePath: string }>): Promise<void> {
@@ -267,7 +267,7 @@ export class AlbumWorkspaceComponent {
             previews[p.id] = await this.desktop.preview(p.filePath);
           else missing.push(p.id);
         } catch (e) {
-          this.albums.message.set((e as Error).message);
+          this.albums.notify((e as Error).message);
         }
       }),
     );
@@ -275,8 +275,9 @@ export class AlbumWorkspaceComponent {
     this.previews.set(previews);
     if (this.album()) this.albums.setMissing(this.album()!, missing);
     if (missing.length)
-      this.albums.message.set(
+      this.albums.notify(
         'Alcune immagini non sono più presenti. Seleziona gli slot indicati per riacquisirle.',
+        'warning',
       );
   }
   onMissing(id: string): void {
@@ -313,9 +314,9 @@ export class AlbumWorkspaceComponent {
     try {
       this.albums.addSlot(this.id, this.pageNumber(), cell.row, cell.column, this.preset());
       this.adding.set(false);
-      this.albums.message.set('');
+      this.albums.dismissMessage();
     } catch (e) {
-      this.albums.message.set((e as Error).message);
+      this.albums.notify((e as Error).message);
     }
   }
   move(position: { id: string; row: number; column: number }): void {
@@ -331,9 +332,9 @@ export class AlbumWorkspaceComponent {
         slot.preset,
       );
       this.selectSlot(slot.id);
-      this.albums.message.set('');
+      this.albums.dismissMessage();
     } catch (e) {
-      this.albums.message.set((e as Error).message);
+      this.albums.notify((e as Error).message);
     }
   }
   edit(): void {
@@ -347,9 +348,9 @@ export class AlbumWorkspaceComponent {
         this.editColumn(),
         this.editPreset(),
       );
-      this.albums.message.set('');
+      this.albums.dismissMessage();
     } catch (e) {
-      this.albums.message.set((e as Error).message);
+      this.albums.notify((e as Error).message);
     }
   }
   async scanSlot(id: string): Promise<void> {
@@ -377,10 +378,10 @@ export class AlbumWorkspaceComponent {
         ))
       )
         return;
-      await this.desktop.trashPhoto(album.basePath, pageNumber, slot.position);
+      await this.desktop.trashPhoto(album.basePath, pageNumber, slot.position, album.groupByPage);
       this.albums.removeSlot(this.id, pageNumber, slot.id);
     } catch (e) {
-      this.albums.message.set((e as Error).message);
+      this.albums.notify((e as Error).message);
     } finally {
       this.albums.busy.set(false);
     }
@@ -391,9 +392,9 @@ export class AlbumWorkspaceComponent {
     const pageNumber = this.pageNumber();
     if (!slot || !album || this.albums.busy() || this.albums.storage.blocked()) return;
     this.albums.busy.set(true);
-    this.albums.message.set('');
+    this.albums.dismissMessage();
     try {
-      const base = `${album.basePath}/page-${String(pageNumber).padStart(3, '0')}/photo-${String(slot.position).padStart(3, '0')}`;
+      const base = `${album.basePath}/${photoBaseName(pageNumber, slot.position, album.groupByPage)}`;
       const exists = (
         await Promise.all(['jpg', 'png'].map((ext) => this.desktop.exists(`${base}.${ext}`)))
       ).some(Boolean);
@@ -409,6 +410,7 @@ export class AlbumWorkspaceComponent {
       let result = await this.scanner.scan({
         ...this.settings.settings(),
         albumPath: album.basePath,
+        groupByPage: album.groupByPage,
         pageNumber,
         photoPosition: slot.position,
         replace,
@@ -425,6 +427,7 @@ export class AlbumWorkspaceComponent {
         result = await this.scanner.scan({
           ...this.settings.settings(),
           albumPath: album.basePath,
+          groupByPage: album.groupByPage,
           pageNumber,
           photoPosition: slot.position,
           replace: true,
@@ -436,9 +439,9 @@ export class AlbumWorkspaceComponent {
       this.albums.acquired(this.id, pageNumber, slot.id, result);
       const next = nextIncomplete(this.displayAlbum()!, slot.id);
       if (next) this.albums.select(this.id, next.pageNumber, next.slotId);
-      else this.albums.message.set('Tutte le fotografie preparate sono state acquisite.');
+      else this.albums.notify('Tutte le fotografie preparate sono state acquisite.', 'success');
     } catch (e) {
-      this.albums.message.set((e as Error).message);
+      this.albums.notify((e as Error).message);
     } finally {
       this.albums.busy.set(false);
     }
@@ -447,21 +450,21 @@ export class AlbumWorkspaceComponent {
     try {
       await this.scanner.cancel();
     } catch (e) {
-      this.albums.message.set((e as Error).message);
+      this.albums.notify((e as Error).message);
     }
   }
   async openFolder(): Promise<void> {
     try {
       await this.desktop.openFolder(this.album()!.basePath);
     } catch (e) {
-      this.albums.message.set((e as Error).message);
+      this.albums.notify((e as Error).message);
     }
   }
   async showFile(): Promise<void> {
     try {
       await this.desktop.showFile(this.selected()!.filePath!);
     } catch (e) {
-      this.albums.message.set((e as Error).message);
+      this.albums.notify((e as Error).message);
     }
   }
 }

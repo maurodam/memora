@@ -26,6 +26,7 @@ export class FakeScannerAdapter implements ScannerAdapter {
         request.albumPath,
         request.pageNumber,
         request.photoPosition,
+        request.groupByPage,
       );
       if (
         !request.replace &&
@@ -50,6 +51,7 @@ export class FakeScannerAdapter implements ScannerAdapter {
         request.format,
         output,
         request.replace,
+        request.groupByPage,
       );
       return { status: 'success', filePath, scannedAt: new Date().toISOString() };
     } catch (e) {

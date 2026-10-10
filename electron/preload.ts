@@ -11,7 +11,8 @@ const api: DesktopApi = {
     fileExists: (path) => ipcRenderer.invoke('files:exists', path),
     getPreviewUrl: (path) => ipcRenderer.invoke('files:preview', path),
     trashAlbum: (path) => ipcRenderer.invoke('files:trash-album', path),
-    trashPhoto: (path, page, photo) => ipcRenderer.invoke('files:trash-photo', path, page, photo),
+    trashPhoto: (path, page, photo, groupByPage) =>
+      ipcRenderer.invoke('files:trash-photo', path, page, photo, groupByPage),
   },
   scanner: {
     getDevices: (mode) => ipcRenderer.invoke('scanner:get-devices', mode),

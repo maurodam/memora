@@ -1,6 +1,7 @@
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { randomUUID } from 'node:crypto';
+import { photoBaseName } from '../../shared/album-rules';
 import { ScanFormat } from '../../shared/desktop-contracts';
 export class UserError extends Error {
   constructor(
@@ -10,16 +11,20 @@ export class UserError extends Error {
     super(message);
   }
 }
-export function photoName(page: number, photo: number, format: ScanFormat): string {
+export function photoName(
+  page: number,
+  photo: number,
+  format: ScanFormat,
+  groupByPage = true,
+): string {
   for (const n of [page, photo])
     if (!Number.isSafeInteger(n) || n < 1)
       throw new UserError('INVALID_INPUT', 'Numero pagina o foto non valido.');
   if (format !== 'jpeg' && format !== 'png')
     throw new UserError('INVALID_INPUT', 'Formato non valido.');
-  return path.join(
-    `page-${String(page).padStart(3, '0')}`,
-    `photo-${String(photo).padStart(3, '0')}.${format === 'jpeg' ? 'jpg' : 'png'}`,
-  );
+  if (typeof groupByPage !== 'boolean')
+    throw new UserError('INVALID_INPUT', 'Organizzazione dei file non valida.');
+  return `${photoBaseName(page, photo, groupByPage)}.${format === 'jpeg' ? 'jpg' : 'png'}`;
 }
 const OWNERSHIP_FILE = '.albumscanner-managed';
 const OWNERSHIP_CONTENT = 'it.damianomauro.albumscanner/v1\n';
@@ -134,11 +139,16 @@ export class FileStore {
       throw e;
     }
   }
-  async candidates(root: string, page: number, photo: number): Promise<string[]> {
+  async candidates(
+    root: string,
+    page: number,
+    photo: number,
+    groupByPage = true,
+  ): Promise<string[]> {
     await this.safe(root, true);
     return Promise.all(
       (['jpeg', 'png'] as const).map(async (format) =>
-        this.safe(path.join(root, photoName(page, photo, format))),
+        this.safe(path.join(root, photoName(page, photo, format, groupByPage))),
       ),
     );
   }
@@ -149,10 +159,13 @@ export class FileStore {
     format: ScanFormat,
     bytes: Buffer,
     replace: boolean,
+    groupByPage = true,
   ): Promise<string> {
     await this.requireAlbum(root);
-    const destination = await this.safe(path.join(root, photoName(page, photo, format)));
-    const candidates = await this.candidates(root, page, photo);
+    const destination = await this.safe(
+      path.join(root, photoName(page, photo, format, groupByPage)),
+    );
+    const candidates = await this.candidates(root, page, photo, groupByPage);
     const directory = path.dirname(destination);
     try {
       await fs.mkdir(directory);

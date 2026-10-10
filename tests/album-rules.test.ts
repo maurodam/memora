@@ -1,6 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { fits, nextIncomplete, progress, validState } from '../shared/album-rules';
+import {
+  fits,
+  nextIncomplete,
+  nextPhotoPosition,
+  progress,
+  validState,
+} from '../shared/album-rules';
 import { Album, AppState, DEFAULT_SETTINGS, PhotoSlot } from '../shared/desktop-contracts';
 const slot = (id: string, position: number, filePath?: string): PhotoSlot => ({
   id,
@@ -72,4 +78,41 @@ test('metadata validati: roundtrip, versioni, duplicati, layout', () => {
   const duplicate = structuredClone(state);
   duplicate.albums.push(duplicate.albums[0]!);
   assert.equal(validState(duplicate), false);
+});
+
+test('organizzazione album persistita: compatibilità e percorsi coerenti', () => {
+  const state: AppState = { version: 1, albums: [album()], settings: { ...DEFAULT_SETTINGS } };
+  assert.equal(validState(state), true);
+  state.albums[0]!.groupByPage = true;
+  assert.equal(validState(state), true);
+  state.albums[0]!.groupByPage = false;
+  assert.equal(validState(state), false);
+  state.albums[0]!.pages[0]!.photos[0]!.filePath = '/tmp/Album/photo-001.jpg';
+  assert.equal(validState(JSON.parse(JSON.stringify(state))), true);
+  const invalid = JSON.parse(JSON.stringify(state));
+  invalid.albums[0].groupByPage = 'false';
+  assert.equal(validState(invalid), false);
+  state.albums[0]!.pages[0]!.photos[0]!.filePath = '/tmp/Album/photo-002.jpg';
+  assert.equal(validState(state), false);
+});
+
+test('numerazione unica album senza cartelle: stabile dopo eliminazione e aggiunte fuori ordine', () => {
+  const a = album();
+  a.groupByPage = false;
+  assert.equal(nextPhotoPosition(a, a.pages[0]!), 4);
+  a.pages[0]!.photos = [];
+  a.pages[1]!.photos = [];
+  assert.equal(nextPhotoPosition(a, a.pages[0]!), 4);
+  a.pages[0]!.nextPhotoPosition = 5;
+  assert.equal(nextPhotoPosition(a, a.pages[1]!), 5);
+  a.groupByPage = true;
+  assert.equal(nextPhotoPosition(a, a.pages[1]!), 4);
+});
+
+test('numerazione duplicata tra pagine rifiutata senza cartelle', () => {
+  const a = album();
+  a.groupByPage = false;
+  delete a.pages[0]!.photos[0]!.filePath;
+  a.pages[1]!.photos[0]!.position = 1;
+  assert.equal(validState({ version: 1, albums: [a], settings: DEFAULT_SETTINGS }), false);
 });

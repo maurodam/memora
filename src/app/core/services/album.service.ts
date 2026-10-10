@@ -3,6 +3,7 @@ import {
   Album,
   AppState,
   fits,
+  nextPhotoPosition,
   PhotoPreset,
   PRESETS,
   ScanResult,
@@ -16,7 +17,16 @@ export class AlbumService {
   readonly albums = computed(() => this.state().albums);
   readonly missingIds = signal<string[]>([]);
   readonly busy = signal(false);
-  readonly message = signal('');
+  readonly message = signal<{ text: string; severity: 'success' | 'warning' | 'error' } | null>(
+    null,
+  );
+  notify(text: string, severity: 'success' | 'warning' | 'error' = 'error'): void {
+    if (severity === 'success' && this.storage.error()) return;
+    this.message.set({ text, severity });
+  }
+  dismissMessage(): void {
+    this.message.set(null);
+  }
   commit(update: (state: AppState) => void): void {
     if (this.storage.blocked()) throw new Error('Metadata non leggibili. Operazione bloccata.');
     const next = structuredClone(this.state());
@@ -27,12 +37,13 @@ export class AlbumService {
   retry(): void {
     this.storage.save(this.state());
   }
-  addAlbum(name: string, pageCount: number, basePath: string): Album {
+  addAlbum(name: string, pageCount: number, basePath: string, groupByPage = true): Album {
     const album: Album = {
       id: crypto.randomUUID(),
       name,
       pageCount,
       basePath,
+      groupByPage,
       createdAt: new Date().toISOString(),
       pages: Array.from({ length: pageCount }, (_, i) => ({
         number: i + 1,
@@ -63,13 +74,12 @@ export class AlbumService {
   ): string {
     const id = crypto.randomUUID();
     this.commit((s) => {
-      const page = s.albums
-        .find((a) => a.id === albumId)
-        ?.pages.find((p) => p.number === pageNumber);
-      if (!page) throw new Error('Pagina non trovata.');
+      const album = s.albums.find((a) => a.id === albumId);
+      const page = album?.pages.find((p) => p.number === pageNumber);
+      if (!album || !page) throw new Error('Pagina non trovata.');
       const slot = {
         id,
-        position: page.nextPhotoPosition,
+        position: nextPhotoPosition(album, page),
         row,
         column,
         ...PRESETS[preset],
@@ -78,7 +88,7 @@ export class AlbumService {
       if (!fits(page, slot))
         throw new Error('Spazio insufficiente: scegli una cella libera e interna alla pagina.');
       page.photos.push(slot);
-      page.nextPhotoPosition++;
+      page.nextPhotoPosition = slot.position + 1;
       s.selection = { albumId, pageNumber, slotId: id };
     });
     return id;

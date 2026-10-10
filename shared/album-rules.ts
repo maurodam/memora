@@ -4,6 +4,16 @@ export const PRESETS: Record<PhotoPreset, { width: number; height: number }> = {
   horizontal: { width: 3, height: 2 },
   square: { width: 2, height: 2 },
 };
+export function photoBaseName(page: number, photo: number, groupByPage = true): string {
+  const pageName = `page-${String(page).padStart(3, '0')}`;
+  const photoName = `photo-${String(photo).padStart(3, '0')}`;
+  return groupByPage ? `${pageName}/${photoName}` : photoName;
+}
+export function nextPhotoPosition(album: Album, page: AlbumPage): number {
+  return album.groupByPage === false
+    ? Math.max(...album.pages.map((p) => p.nextPhotoPosition))
+    : page.nextPhotoPosition;
+}
 export function fits(
   page: AlbumPage,
   slot: Pick<PhotoSlot, 'row' | 'column' | 'width' | 'height'>,
@@ -80,6 +90,7 @@ export function validState(value: unknown): value is AppState {
       ids.has(a['id']) ||
       !text(a['name']) ||
       !text(a['basePath']) ||
+      (a['groupByPage'] !== undefined && typeof a['groupByPage'] !== 'boolean') ||
       !a['basePath'].startsWith('/') ||
       !text(a['createdAt']) ||
       !Number.isFinite(Date.parse(a['createdAt'])) ||
@@ -90,6 +101,7 @@ export function validState(value: unknown): value is AppState {
       return false;
     ids.add(a['id']);
     const photoIds = new Set<string>();
+    const albumPositions = new Set<number>();
     for (const [i, p] of a['pages'].entries()) {
       if (
         !record(p) ||
@@ -107,6 +119,7 @@ export function validState(value: unknown): value is AppState {
           photoIds.has(f['id']) ||
           !integer(f['position']) ||
           positions.has(f['position']) ||
+          (a['groupByPage'] === false && albumPositions.has(f['position'])) ||
           f['position'] >= p['nextPhotoPosition'] ||
           !integer(f['row']) ||
           !integer(f['column']) ||
@@ -118,7 +131,7 @@ export function validState(value: unknown): value is AppState {
         )
           return false;
         const photo = f as unknown as PhotoSlot;
-        const expected = `${a['basePath']}/page-${String(i + 1).padStart(3, '0')}/photo-${String(photo.position).padStart(3, '0')}`;
+        const expected = `${a['basePath']}/${photoBaseName(i + 1, photo.position, a['groupByPage'] as boolean | undefined)}`;
         if (
           photo.filePath !== undefined &&
           photo.filePath !== `${expected}.jpg` &&
@@ -135,6 +148,7 @@ export function validState(value: unknown): value is AppState {
         )
           return false;
         positions.add(photo.position);
+        albumPositions.add(photo.position);
         photoIds.add(photo.id);
         accepted.push(photo);
       }

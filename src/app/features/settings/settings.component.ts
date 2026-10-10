@@ -111,7 +111,7 @@ export class SettingsComponent {
       this.devices.set(await this.scanner.getDevices(this.settings.settings().mode));
     } catch (e) {
       this.devices.set([]);
-      this.albums.message.set((e as Error).message);
+      this.albums.notify((e as Error).message);
     }
   }
   mode(value: string | null | undefined): void {
