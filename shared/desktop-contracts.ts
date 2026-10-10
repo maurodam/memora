@@ -22,6 +22,7 @@ export interface Album {
   name: string;
   pageCount: number;
   basePath: string;
+  groupByPage?: boolean;
   createdAt: string;
   pages: AlbumPage[];
 }
@@ -49,6 +50,7 @@ export interface ScanRequest {
   dpi: 300 | 600;
   format: ScanFormat;
   albumPath: string;
+  groupByPage?: boolean;
   pageNumber: number;
   photoPosition: number;
   replace: boolean;
@@ -73,7 +75,12 @@ export interface DesktopApi {
     fileExists(path: string): Promise<Result<boolean>>;
     getPreviewUrl(path: string): Promise<Result<string>>;
     trashAlbum(path: string): Promise<Result<void>>;
-    trashPhoto(path: string, pageNumber: number, photoPosition: number): Promise<Result<void>>;
+    trashPhoto(
+      path: string,
+      pageNumber: number,
+      photoPosition: number,
+      groupByPage?: boolean,
+    ): Promise<Result<void>>;
   };
   scanner: {
     getDevices(mode: ScannerMode): Promise<Result<ScannerDevice[]>>;

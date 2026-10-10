@@ -8,7 +8,7 @@ import { AlbumService } from '../../core/services/album.service';
 import { DesktopService } from '../../core/services/desktop.service';
 import { ScannerService } from '../../core/services/scanner.service';
 import { ScannerSettingsService } from '../../core/services/scanner-settings.service';
-import { nextIncomplete, PhotoPreset, progress } from '../../core/models/models';
+import { nextIncomplete, photoBaseName, PhotoPreset, progress } from '../../core/models/models';
 import { ConfirmationService } from '../../shared/components/confirmation.service';
 import { PageSidebarComponent } from './page-sidebar.component';
 import { AlbumPageComponent } from './album-page.component';
@@ -378,7 +378,7 @@ export class AlbumWorkspaceComponent {
         ))
       )
         return;
-      await this.desktop.trashPhoto(album.basePath, pageNumber, slot.position);
+      await this.desktop.trashPhoto(album.basePath, pageNumber, slot.position, album.groupByPage);
       this.albums.removeSlot(this.id, pageNumber, slot.id);
     } catch (e) {
       this.albums.notify((e as Error).message);
@@ -394,7 +394,7 @@ export class AlbumWorkspaceComponent {
     this.albums.busy.set(true);
     this.albums.dismissMessage();
     try {
-      const base = `${album.basePath}/page-${String(pageNumber).padStart(3, '0')}/photo-${String(slot.position).padStart(3, '0')}`;
+      const base = `${album.basePath}/${photoBaseName(pageNumber, slot.position, album.groupByPage)}`;
       const exists = (
         await Promise.all(['jpg', 'png'].map((ext) => this.desktop.exists(`${base}.${ext}`)))
       ).some(Boolean);
@@ -410,6 +410,7 @@ export class AlbumWorkspaceComponent {
       let result = await this.scanner.scan({
         ...this.settings.settings(),
         albumPath: album.basePath,
+        groupByPage: album.groupByPage,
         pageNumber,
         photoPosition: slot.position,
         replace,
@@ -426,6 +427,7 @@ export class AlbumWorkspaceComponent {
         result = await this.scanner.scan({
           ...this.settings.settings(),
           albumPath: album.basePath,
+          groupByPage: album.groupByPage,
           pageNumber,
           photoPosition: slot.position,
           replace: true,

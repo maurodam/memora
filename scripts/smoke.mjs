@@ -50,12 +50,17 @@ const launch = async () => {
   });
   return page;
 };
+const groupByPage = process.env.ALBUMSCANNER_TEST_FLAT !== '1';
+const photoPath = (format) =>
+  groupByPage ? `page-002/photo-001.${format}` : `photo-002.${format}`;
 const errors = [];
 try {
   let page = await launch();
   page.on('pageerror', (e) => errors.push(e.message));
   await page.getByRole('link', { name: 'Nuovo album', exact: true }).click();
   await page.getByLabel('Nome album').fill('Verifica Album');
+  await expect(page.getByLabel('Suddividi i file in cartelle per pagina')).toBeChecked();
+  if (!groupByPage) await page.getByLabel('Suddividi i file in cartelle per pagina').uncheck();
   await page.getByLabel('Numero totale di pagine').fill('2');
   await page.getByRole('button', { name: 'Scegli cartella', exact: true }).click();
   await page.getByRole('button', { name: 'Crea album', exact: true }).click();
@@ -73,7 +78,17 @@ try {
   await page.getByRole('button', { name: 'Scansiona foto', exact: true }).click();
   await expect(page.getByText('2 / 2 foto · 100%', { exact: true })).toBeVisible();
   const albumRoot = path.join(parent, 'Verifica Album');
-  const jpg = path.join(albumRoot, 'page-002/photo-001.jpg');
+  const jpg = path.join(albumRoot, photoPath('jpg'));
+  if (!groupByPage) {
+    assert.equal(
+      await fs.readFile(path.join(albumRoot, 'photo-001.jpg')).then((bytes) => bytes[0]),
+      255,
+    );
+    assert.equal(
+      (await fs.readdir(albumRoot)).some((name) => /^page-\d+$/.test(name)),
+      false,
+    );
+  }
   const signature = await fs.readFile(jpg);
   assert.equal(signature[0], 255);
   assert.equal(signature[1], 216);
@@ -113,7 +128,7 @@ try {
   await page.getByRole('link', { name: 'Apri album', exact: true }).click();
   await page.getByRole('button', { name: 'Scansiona foto', exact: true }).click();
   await page.getByRole('button', { name: 'Sostituisci', exact: true }).click();
-  const pngPath = path.join(albumRoot, 'page-002/photo-001.png');
+  const pngPath = path.join(albumRoot, photoPath('png'));
   await expect(page.locator('app-scanner-toolbar button').last()).toHaveText('Scansiona foto');
   assert.equal((await fs.readFile(pngPath))[0], 137);
   await assert.rejects(fs.access(jpg));
@@ -124,6 +139,12 @@ try {
   await page.getByRole('link', { name: 'Apri album', exact: true }).click();
   await expect(page.getByText('2 / 2 foto · 100%', { exact: true })).toBeVisible();
   await expect(page.locator('app-photo-slot img')).toBeVisible();
+  assert.equal(
+    await page.evaluate(
+      () => JSON.parse(localStorage.getItem('albumscanner.state.v1')).albums[0].groupByPage,
+    ),
+    groupByPage,
+  );
   assert.equal(
     await page.evaluate(async () => {
       const r = await window.files.fileExists('/etc/passwd');

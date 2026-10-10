@@ -29,7 +29,7 @@ export class DesktopService {
   trashAlbum(path: string): Promise<void> {
     return this.unwrap(window.files.trashAlbum(path));
   }
-  trashPhoto(path: string, page: number, photo: number): Promise<void> {
-    return this.unwrap(window.files.trashPhoto(path, page, photo));
+  trashPhoto(path: string, page: number, photo: number, groupByPage = true): Promise<void> {
+    return this.unwrap(window.files.trashPhoto(path, page, photo, groupByPage));
   }
 }

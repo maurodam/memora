@@ -108,3 +108,37 @@ test('race durante sostituzione: file concorrente non sovrascritto, originale re
     await f.clean();
   }
 });
+
+test('album senza sottocartelle: pagine distinte, collisioni e sostituzione formato', async () => {
+  const f = await fixture();
+  try {
+    const first = await f.store.commit(f.root, 1, 1, 'jpeg', Buffer.from('first'), false, false);
+    const second = await f.store.commit(f.root, 2, 2, 'jpeg', Buffer.from('second'), false, false);
+    assert.equal(first, path.join(f.root, 'photo-001.jpg'));
+    assert.equal(second, path.join(f.root, 'photo-002.jpg'));
+    await assert.rejects(
+      f.store.commit(f.root, 1, 1, 'png', Buffer.from('replacement'), false, false),
+      /già stata acquisita/,
+    );
+    const replacement = await f.store.commit(
+      f.root,
+      1,
+      1,
+      'png',
+      Buffer.from('replacement'),
+      true,
+      false,
+    );
+    assert.equal(await f.store.exists(first), false);
+    assert.equal(await fs.readFile(second, 'utf8'), 'second');
+    assert.equal(await fs.readFile(replacement, 'utf8'), 'replacement');
+    assert.deepEqual(await f.store.candidates(f.root, 1, 1, false), [first, replacement]);
+    assert.deepEqual((await fs.readdir(f.root)).sort(), [
+      '.albumscanner-managed',
+      'photo-001.png',
+      'photo-002.jpg',
+    ]);
+  } finally {
+    await f.clean();
+  }
+});

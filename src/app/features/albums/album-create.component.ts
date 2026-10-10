@@ -59,6 +59,25 @@ import { DesktopService } from '../../core/services/desktop.service';
               }}</span>
             </div>
           </div>
+          <div class="space-y-2">
+            <label for="group-by-page" class="flex items-center gap-2 text-sm font-medium">
+              <input
+                id="group-by-page"
+                type="checkbox"
+                formControlName="groupByPage"
+                class="accent-primary"
+              />
+              Suddividi i file in cartelle per pagina
+            </label>
+            <p class="text-xs text-muted-foreground">
+              {{
+                form.controls.groupByPage.value
+                  ? 'Ogni pagina avrà una cartella: page-001/photo-001.jpg.'
+                  : 'Tutte le foto saranno nella cartella dell’album: photo-001.jpg, photo-002.jpg, …'
+              }}
+              La scelta vale per tutte le scansioni di questo album.
+            </p>
+          </div>
           <p class="text-xs text-muted-foreground">
             Verrà creata una nuova cartella con il nome dell’album.
           </p>
@@ -82,6 +101,7 @@ export class AlbumCreateComponent {
   private router = inject(Router);
   readonly folder = signal('');
   readonly form = new FormGroup({
+    groupByPage: new FormControl(true, { nonNullable: true }),
     name: new FormControl('', {
       nonNullable: true,
       validators: [Validators.required, Validators.maxLength(120)],
@@ -116,7 +136,12 @@ export class AlbumCreateComponent {
     this.albums.dismissMessage();
     try {
       const path = await this.desktop.createAlbum(this.folder(), name);
-      const album = this.albums.addAlbum(name, this.form.controls.pages.value, path);
+      const album = this.albums.addAlbum(
+        name,
+        this.form.controls.pages.value,
+        path,
+        this.form.controls.groupByPage.value,
+      );
       this.albums.busy.set(false);
       await this.router.navigate(['/albums', album.id]);
     } catch (e) {

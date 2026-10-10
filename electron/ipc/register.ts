@@ -39,6 +39,12 @@ export function registerIpc(
       throw new UserError('INVALID_INPUT', 'Parametro non valido.');
     return value;
   };
+  const grouping = (value: unknown): boolean => {
+    if (value === undefined) return true;
+    if (typeof value !== 'boolean')
+      throw new UserError('INVALID_INPUT', 'Organizzazione dei file non valida.');
+    return value;
+  };
   const positive = (value: unknown): number => {
     if (typeof value !== 'number' || !Number.isSafeInteger(value) || value < 1)
       throw new UserError('INVALID_INPUT', 'Numero non valido.');
@@ -76,7 +82,10 @@ export function registerIpc(
   handle('files:exists', async (value) => store.exists(text(value)));
   handle('files:preview', async (value) => {
     const safe = await store.safe(text(value));
-    if (!/^photo-\d+\.(jpg|png)$/.test(path.basename(safe)) || !(await store.exists(safe)))
+    if (
+      !/^(?:page-\d+-)?photo-\d+\.(jpg|png)$/.test(path.basename(safe)) ||
+      !(await store.exists(safe))
+    )
       throw new UserError('FILE_MISSING', 'Immagine mancante.');
     const token = randomUUID();
     previews.set(token, safe);
@@ -88,10 +97,15 @@ export function registerIpc(
     await shell.trashItem(safe);
     store.roots.delete(safe);
   });
-  handle('files:trash-photo', async (value, page, photo) => {
+  handle('files:trash-photo', async (value, page, photo, groupByPage) => {
     idle();
     const root = await store.requireAlbum(text(value));
-    const candidates = await store.candidates(root, positive(page), positive(photo));
+    const candidates = await store.candidates(
+      root,
+      positive(page),
+      positive(photo),
+      grouping(groupByPage),
+    );
     for (const file of candidates) if (await store.exists(file)) await shell.trashItem(file);
   });
   handle('scanner:available-modes', async () => (native ? ['fake', 'macos'] : ['fake']));
@@ -122,6 +136,7 @@ export function registerIpc(
       text(r.albumPath);
       positive(r.pageNumber);
       positive(r.photoPosition);
+      grouping(r.groupByPage);
       if (
         !['fake', 'macos'].includes(r.mode) ||
         ![300, 600].includes(r.dpi) ||

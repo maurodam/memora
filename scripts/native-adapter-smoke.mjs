@@ -23,6 +23,7 @@ const app = await electron.launch({
   },
 });
 let page;
+const groupByPage = process.env.ALBUMSCANNER_TEST_FLAT !== '1';
 const errors = [];
 try {
   const bytes = await app.evaluate(({ nativeImage, dialog }, parent) => {
@@ -38,6 +39,7 @@ try {
   page.on('pageerror', (e) => errors.push(e.message));
   await page.getByRole('link', { name: 'Nuovo album', exact: true }).click();
   await page.getByLabel('Nome album').fill('Native Adapter');
+  if (!groupByPage) await page.getByLabel('Suddividi i file in cartelle per pagina').uncheck();
   await page.getByRole('button', { name: 'Scegli cartella', exact: true }).click();
   await page.getByRole('button', { name: 'Crea album', exact: true }).click();
   const add = async (row) => {
@@ -58,7 +60,14 @@ try {
   await page.getByRole('button', { name: 'Scansiona foto', exact: true }).click();
   await expect(page.getByText('1 / 1 foto · 100%', { exact: true })).toBeVisible();
   const albumRoot = path.join(parent, 'Native Adapter');
-  assert.equal((await fs.readFile(path.join(albumRoot, 'page-001/photo-001.jpg')))[0], 255);
+  assert.equal(
+    (
+      await fs.readFile(
+        path.join(albumRoot, groupByPage ? 'page-001/photo-001.jpg' : 'photo-001.jpg'),
+      )
+    )[0],
+    255,
+  );
   await add(4);
   await settings('flatbed', 300);
   await page.getByRole('button', { name: 'Scansiona foto', exact: true }).click();
