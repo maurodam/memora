@@ -30,7 +30,7 @@ jobs:
       - run: npm run scanner:build
       - run: npm run build
       - name: Package DMG
-        run: npx electron-builder --mac dmg --${{ matrix.arch }}
+        run: npx electron-builder --mac dmg --${{ matrix.arch }} --publish never
       - name: Verify DMG
         run: test -s "release/Memora-macOS-${{ matrix.arch }}.dmg"
       - uses: actions/upload-artifact@v7.0.2
